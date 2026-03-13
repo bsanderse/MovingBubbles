@@ -14,7 +14,7 @@ Open Matlab. Tested with Matlab R2025b. The most recent and generic version is i
 ### Main code
 [main.m](src/main.m): radial basis functions in Cartesian coordinates, general transformations. This is the most general code and preferred starting point.
 There are two important user inputs:
-- [curve type](src/surves/parameteric_curve.m): the type of initial curve. This can in principle be 'anything', and an interesting and useful example is the bubble.
+- [curve type](src/curves/parametric_curve.m): the type of initial curve. This can in principle be 'anything', and an interesting and useful example is the bubble.
 - [transformation](src/transform.m): the type of transformation to be applied to the curve, where currently the options are 'rotation', 'translation'
 'stretch','shear', 'rotation_translation', 'anisotropic_stretch', 'vortex'. These are all linear transformations, except 'vortex'.
 

@@ -8,7 +8,7 @@ switch type
 
     case 'ellipse'
 
-        [x,y] = ellipse(s,0,a,b);
+        [x,y] = ellipse(s);
 
     otherwise
         error('not implemented');
