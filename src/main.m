@@ -15,7 +15,7 @@ Ns        = 100;   % number of evaluation points
 t_min     = 0;
 t_max     = 1;
 Nt        = 41; % number of time steps
-Nsamples  = 50; % number of sample points used to construct RBF
+Nsamples  = 20; % number of sample points used to construct RBF
 Nt_plot   = 5; % number curves to plot
 
 curve_type = 'bubble'; % 'bubble', 'ellipse', ..
@@ -32,6 +32,11 @@ curve_type = 'bubble'; % 'bubble', 'ellipse', ..
 
 transform_type = 'anisotropic_stretch';
 
+%% rbf
+% 'Gauss'
+% 'Wendland'
+rbf_type = 'Gauss';
+
 %% set up s and t vectors
 s = linspace(s_min, s_max, Ns).';   % parameter locations at which to evaluate x
 t = linspace(t_min, t_max, Nt).';          % time vector
@@ -39,10 +44,13 @@ t_plot = linspace(t_min, t_max, Nt_plot).';
 
 % choose sampling points at t=0
 % s_samples = s_max*rand(Nsamples,1);         % random angles
-s_samples = linspace(0,s_max,Nsamples).';     % uniform samples
+s_samples = linspace(0,s_max,Nsamples+1).';     % uniform samples
 % s_samples = 0.5*s_max*(legpts(Nsamples)+1); % legendre points on [-1,1]
 % s_samples = 0.5*s_max*(chebpts(Nsamples,1)+1);
 
+% remove last sample, which is same as first one; 
+% this prevents duplicate samples - this is important for conditioning
+s_samples = s_samples(1:end-1);  
 
 
 %% Preallocate location matrices
@@ -121,25 +129,31 @@ legend('show');
 % ylim([-1.5 1.5])
 
 
-%% Define RBF kernel
-% epsilon = 1;                         % RBF width parameter
-% arc length: 
-% epsilon = mean(abs(diff(s_samples)));  % heuristic
-% epsilon = mean(norm(diff(x_samples),2));  % heuristic
+%% Define RBF kernel parameter
 
-% heuristic based on distance between subsequent points along curve
-d = sqrt(sum(diff(x_samples(:,:,1)).^2,2));
-h = mean(d);
-epsilon = 1.5*h;
+switch rbf_type
+    case 'Gauss'
+        % arc length: 
+        epsilon = mean(abs(diff(s_samples)));  % heuristic
+        % epsilon = mean(norm(diff(x_samples),2));  % heuristic
+        
+        % heuristic based on distance between subsequent points along curve
+        % d = sqrt(sum(diff(x_samples(:,:,1)).^2,2));
+        % h = mean(d);
+        % epsilon = 1.5*h;
+        
+        % local h and corresponding epsilon
+        % D = pdist2(x_samples(:,:,1),x_samples(:,:,1));           % pairwise distance
+        % D(1:Nsamples+1:end) = inf;        % ignore self-distance
+        % h = min(D,[],2);            % nearest-neighbor spacing
+        % epsilon = h;
 
-% local h and corresponding epsilon
-% D = pdist2(x_samples(:,:,1),x_samples(:,:,1));           % pairwise distance
-% D(1:Nsamples+1:end) = inf;        % ignore self-distance
-% h = min(D,[],2);            % nearest-neighbor spacing
-% epsilon = h;
+    case 'Wendland'
+        epsilon = 1;                         % RBF width parameter
+end
 
 %% Construct design matrix A
-A = get_design_matrix(s_samples,epsilon);
+A = get_design_matrix(s_samples,epsilon,rbf_type);
 
 
 %% Solve for coefficients at t=0
@@ -150,7 +164,7 @@ c = A \ x_samples(:,:,1);  % solve A*c = x
 % theta_eval = linspace(0, theta_max, 200);
 x_rbf = zeros(Ns,2,Nt);
 
-x_rbf(:,:,1) = eval_rbf_x(c,s,s_samples,epsilon);
+x_rbf(:,:,1) = eval_rbf_x(c,s,s_samples,epsilon,false,rbf_type);
 
 
 %% Plot RBF reconstruction and original shape and sampling points
@@ -187,7 +201,7 @@ for k = 1:Nt
     dc_dt = A\dx_dt_samples(:,:,k);
 
     % compute derivatives at evaluation points
-    dx_dt_rbf(:,:,k) = eval_rbf_x(dc_dt,s,s_samples,epsilon);
+    dx_dt_rbf(:,:,k) = eval_rbf_x(dc_dt,s,s_samples,epsilon,false,rbf_type);
 
     % find new positions of the evaluation points
     if (k>1)

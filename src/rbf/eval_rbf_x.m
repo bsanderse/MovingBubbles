@@ -1,4 +1,4 @@
-function [x_rbf,dxds_rbf] = eval_rbf_x(c,s,s_samples,epsilon,jac)
+function [x_rbf,dxds_rbf] = eval_rbf_x(c,s,s_samples,epsilon,jac,type)
 
 Ns    = length(s); % number of evaluation points
 x_rbf = zeros(Ns,2,1);
@@ -17,9 +17,9 @@ for i = 1:Ns
     gamma_vec = abs(s(i) - s_samples);
     gamma_vec = min(gamma_vec, 2*pi - gamma_vec);  % wrap-around
     if (jac==true)
-        [phi,dphi] = rbf(gamma_vec,epsilon,jac);
+        [phi,dphi] = rbf(gamma_vec,epsilon,jac,type);
     else
-        [phi,~] = rbf(gamma_vec,epsilon,jac);
+        [phi,~] = rbf(gamma_vec,epsilon,jac,type);
     end
     x_rbf(i,:) = sum(phi.*c); % sum over all samples
     
