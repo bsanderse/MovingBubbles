@@ -154,10 +154,10 @@ end
 
 %% Construct design matrix A
 A = get_design_matrix(s_samples,epsilon,rbf_type);
-
+dA = decomposition(A,'chol');
 
 %% Solve for coefficients at t=0
-c = A \ x_samples(:,:,1);  % solve A*c = x
+c = dA \ x_samples(:,:,1);  % solve A*c = x
 
 
 %% Evaluate RBF reconstruction at t=0
@@ -198,7 +198,7 @@ x_samples_num(:,:,1) = x_samples(:,:,1);
 for k = 1:Nt
 
     % assume we have the time derivatives at the sampling points
-    dc_dt = A\dx_dt_samples(:,:,k);
+    dc_dt = dA\dx_dt_samples(:,:,k);
 
     % compute derivatives at evaluation points
     dx_dt_rbf(:,:,k) = eval_rbf_x(dc_dt,s,s_samples,epsilon,false,rbf_type);
